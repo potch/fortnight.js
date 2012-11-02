@@ -11,38 +11,60 @@
             text-align: center;
             font-family: sans-serif;
             background: #fff;
+            overflow: hidden;
+            font-size: 14px;
+            display: none;
+        }
+        .fortnight.show {
+            display: block;
         }
         .fortnight .month {
             margin: 2px;
+            display: inline-block;
+            white-space: nowrap;
+            vertical-align: top;
         }
         .fortnight .week {
             margin-top: 2px;
             overflow: hidden;
         }
         .fortnight .label,
-        .fortnight .day {
+        .fortnight a {
             background: #666;
             line-height: 2em;
             height: 2em;
+            width: 2em;
+            text-decoration: none;
+            color: #fff;
         }
         .fortnight .label {
             width: 100%;
         }
         .fortnight .day {
             display: inline-block;
-            width: 2em;
-            height: 2em;
             background: #666;
             white-space: nowrap;
             margin-left: 2px;
-            text-decoration: none;
-            color: #fff;
         }
         .fortnight .day:first-child {
             margin: 0;
         }
+        .fortnight .day.sel {
+            background: #800;
+            font-weight: bold;
+        }
         .fortnight .day.badmonth {
             background: #aaa;
+        }
+        .fortnight .prev {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+        }
+        .fortnight .next {
+            position: absolute;
+            top: 2px;
+            right: 2px;
         }
     </style>
   </head>
