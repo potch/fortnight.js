@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>title</title>
+    <style>
+        .fortnight.picker {
+            position: absolute;
+            border: 2px solid #666;
+            color: #fff;
+            text-align: center;
+            font-family: sans-serif;
+            background: #fff;
+        }
+        .fortnight .month {
+            margin: 2px;
+        }
+        .fortnight .week {
+            margin-top: 2px;
+            overflow: hidden;
+        }
+        .fortnight .label,
+        .fortnight .day {
+            background: #666;
+            line-height: 2em;
+            height: 2em;
+        }
+        .fortnight .label {
+            width: 100%;
+        }
+        .fortnight .day {
+            display: inline-block;
+            width: 2em;
+            height: 2em;
+            background: #666;
+            white-space: nowrap;
+            margin-left: 2px;
+            text-decoration: none;
+            color: #fff;
+        }
+        .fortnight .day:first-child {
+            margin: 0;
+        }
+        .fortnight .day.badmonth {
+            background: #aaa;
+        }
+    </style>
+  </head>
+  <body>
+    <input class="fortnight" type="date">
+    <input class="fortnight" type="date">
+    <script src="fortnight.js"></script>
+    <script>
+
+    </script>
+  </body>
+</html>
