@@ -1,10 +1,5 @@
 (function() {
 
-  var monthNames = ['January', 'February', 'March',
-                    'April', 'May', 'June',
-                    'July', 'August', 'September',
-                    'October', 'November', 'December'];
-
   var today = new Date();
 
   var doc = document;
@@ -16,7 +11,11 @@
 
   var labels = {
     prev: '<',
-    next: '>'
+    next: '>',
+    months: ['January', 'February', 'March',
+             'April', 'May', 'June',
+             'July', 'August', 'September',
+             'October', 'November', 'December']
   };
 
   // dom helpers
@@ -98,11 +97,13 @@
   }
 
   function addClass(el, c) {
+    if (!el || !el.className) return;
     removeClass(el, c);
     el.className += ' ' + c;
   }
 
   function removeClass(el, c) {
+    if (!el || !el.className) return;
     var classes = el.className.split(/\s+/);
     var idx = classes.indexOf(c);
     if (idx+1) {
@@ -165,7 +166,7 @@
   };
 
 
-  function makeMonth(d) {
+  function makeMonth(d, selected) {
     var month = d.getUTCMonth();
     var tdate = d.getUTCDate()
     var sDate = date.findSunday(date.findFirst(d));
@@ -173,7 +174,7 @@
     var monthEl = makeEl('div.month');
 
     var label = makeEl('div.label');
-    label.textContent = monthNames[month] + ' ' + d.getUTCFullYear();
+    label.textContent = labels.months[month] + ' ' + d.getUTCFullYear();
 
     monthEl.appendChild(label);
 
@@ -188,10 +189,10 @@
       day.setAttribute('data-date', date.iso(cDate));
       day.textContent = cDate.getUTCDate();
       if (cDate.getUTCMonth() != month) {
-        day.className += ' badmonth';
+        addClass(day, 'badmonth');
       }
-      if (cDate.getUTCMonth() == month && cDate.getUTCDate() == tdate) {
-        day.className += ' sel';
+      if (dateMatches(cDate, selected)) {
+        addClass(day, 'sel');
       }
       week.appendChild(day);
       cDate = date.nextDay(cDate);
@@ -225,6 +226,7 @@
 
   function Picker() {
     var self = this;
+    var selectedDate;
     var refDate = today;
 
     self.el = makeEl('div.fortnight.picker');
@@ -239,17 +241,18 @@
     };
 
     self.selectDate = function selectDate(e) {
-      var selectedDate = e.target.getAttribute('data-date');
+      var val = e.target.getAttribute('data-date');
       removeClass(self.el.querySelector('.sel'), 'sel');
       addClass(e.target, 'sel');
+      selectedDate = new Date(val);
       if (self.boundInput) {
-        self.boundInput.value = selectedDate;
+        self.boundInput.value = val;
       }
     };
 
     var render = function render() {
       self.el.innerHTML = '';
-      self.el.appendChild(makeMonth(refDate));
+      self.el.appendChild(makeMonth(refDate, selectedDate));
       self.el.appendChild(makeControls());
     };
 
@@ -259,7 +262,10 @@
       var currentVal = new Date(self.boundInput.value);
       refDate = today;
       if (currentVal.getUTCDate()) {
+        selectedDate = currentVal;
         refDate = currentVal;
+      } else {
+        selectedDate = undefined;
       }
       render();
       self.show();
@@ -278,6 +284,29 @@
     delegate(self.el, 'click', { classes: 'day' }, self.selectDate);
     delegate(self.el, 'click', { classes: 'next' }, self.nextMonth);
     delegate(self.el, 'click', { classes: 'prev' }, self.prevMonth);
+  }
+
+  function dateMatches(d, matches) {
+    if (!matches) return;
+    matches = (matches.length) ? matches : [matches];
+    var foundMatch = false;
+    matches.forEach(function(match) {
+      if (match.length == 2) {
+        if (dateInRange(match[0], match[1], d)) {
+          foundMatch = true;
+        }
+      } else {
+        if (date.iso(match) == date.iso(d)) {
+          foundMatch = true;
+        }
+      }
+    });
+    return foundMatch;
+  }
+
+  function dateInRange(start, end, d) {
+    // convert to strings for easier conversion
+    return date.iso(start) <= date.iso(d) && date.iso(d) <= date.iso(end);
   }
 
 })();
