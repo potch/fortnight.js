@@ -1,24 +1,26 @@
 (function() {
+  "use strict";
 
   var today = new Date();
 
   var doc = document;
   var win = window;
 
+  // Am I lazy? yes I am.
   var no = undefined;
-
-  var boundInput;
 
   var labels = {
     prev: '<',
     next: '>',
-    months: ['January', 'February', 'March',
-             'April', 'May', 'June',
-             'July', 'August', 'September',
-             'October', 'November', 'December']
+    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+             'August', 'September', 'October', 'November', 'December']
   };
 
   // dom helpers
+  function arr(o) {
+    return Array.prototype.slice.call(o);
+  }
+
   function delegate(el, type, props, handler) {
     el.addEventListener(type, function(e) {
       var tgt = e.target;
@@ -38,12 +40,13 @@
       // Check classes
       if (props.classes) {
         var classes = props.classes.split(/\s+/);
-        var elClasses = ' ' + tgt.className + ' ';
-        for (var i=0; i<classes.length; i++) {
-          if (!(elClasses.indexOf(' ' + classes[i] + ' ') + 1)) {
-            return;
+        var matches = true;
+        classes.forEach(function (c) {
+          if (!hasClass(tgt, c)) {
+            matches = false;
           }
-        }
+        });
+        if (!matches) return;
       }
 
       // Check attrs
@@ -64,12 +67,13 @@
     });
   }
 
+  // Takes a string 'div,foo' and returns the Node <div class="foo">.
   function makeEl(s) {
     var a = s.split('.');
     var tag = a.shift();
     var el = document.createElement(tag);
     if (tag == 'a') {
-      el.href = '#';
+      el.href = 'javascript:;';
     }
     el.className = a.join(' ');
     return el;
@@ -80,6 +84,7 @@
     e1.style.top = getTop(e2) + e2.offsetHeight + 'px';
   }
 
+  // Recursively determine offsetLeft.
   function getLeft(el) {
     if (el.offsetParent) {
       return getLeft(el.offsetParent) + el.offsetLeft;
@@ -88,6 +93,7 @@
     }
   }
 
+  // Recursively determine offsetTop.
   function getTop(el) {
     if (el.offsetParent) {
       return getTop(el.offsetParent) + el.offsetTop;
@@ -97,12 +103,15 @@
   }
 
   function addClass(el, c) {
+    // Be safe.
     if (!el || !el.className) return;
+    // Be idempotent.
     removeClass(el, c);
     el.className += ' ' + c;
   }
 
   function removeClass(el, c) {
+    // Be safe.
     if (!el || !el.className) return;
     var classes = el.className.split(/\s+/);
     var idx = classes.indexOf(c);
@@ -112,6 +121,13 @@
     }
   }
 
+  function hasClass(el, c) {
+    // Be safe.
+    if (!el || !el.className) return false;
+    var classes = el.className.split(/\s+/);
+    var idx = classes.indexOf(c);
+    return !!(idx+1);
+  }
 
 
   // Date utils
@@ -137,6 +153,13 @@
       return new Date(y,m,d);
     },
 
+    rel: function rel(base, y, m, d) {
+      return date.from(base,
+                       base.getUTCFullYear() + y,
+                       base.getUTCMonth() + m,
+                       base.getUTCDate() + d);
+    },
+
     // Find the nearest preceding Sunday.
     findSunday: function findSunday(d) {
       while(d.getUTCDay()) {
@@ -155,16 +178,40 @@
 
     // Return the next day.
     nextDay: function nextDay(d) {
-      return date.from(d, no, no, d.getUTCDate()+1);
+      return date.rel(d, 0, 0, 1);
     },
 
     // Return the previous day.
     prevDay: function prevDay(d) {
-      return date.from(d, no, no, d.getUTCDate()-1);
+      return date.rel(d, 0, 0, -1);
     }
 
   };
 
+
+  // Check whether Date `d` is in the list of Date/Date ranges in `matches`.
+  function dateMatches(d, matches) {
+    if (!matches) return;
+    matches = (matches.length) ? matches : [matches];
+    var foundMatch = false;
+    matches.forEach(function(match) {
+      if (match.length == 2) {
+        if (dateInRange(match[0], match[1], d)) {
+          foundMatch = true;
+        }
+      } else {
+        if (date.iso(match) == date.iso(d)) {
+          foundMatch = true;
+        }
+      }
+    });
+    return foundMatch;
+  }
+
+  function dateInRange(start, end, d) {
+    // convert to strings for easier conversion
+    return date.iso(start) <= date.iso(d) && date.iso(d) <= date.iso(end);
+  }
 
   function makeMonth(d, selected) {
     var month = d.getUTCMonth();
@@ -219,94 +266,105 @@
 
   var popup = new Picker();
   doc.body.appendChild(popup.el);
-  delegate(win, 'click', {
-    name: 'input',
-    classes: 'fortnight',
-  }, popup.handler);
+  win.addEventListener('focus', function(e) {
+    var tgt = e.target;
+    if (tgt === window) return;
+    if (tgt.nodeName.toLowerCase() === 'input' &&
+        hasClass(tgt, 'fortnight')) {
+      popup.handler.call(this, e);
+    }
+  }, true);
 
   function Picker() {
     var self = this;
     var selectedDate;
     var refDate = today;
+    var shown = false;
+    var boundInput = false;
 
     self.el = makeEl('div.fortnight.picker');
-    self.boundInput = false;
+    self.el.appendChild(makeEl('div.calendar'));
+    self.el.appendChild(makeControls());
 
     self.show = function show() {
       addClass(self.el, 'show');
+      shown = true;
     };
 
     self.hide = function hide() {
       removeClass(self.el, 'show');
+      boundInput = false;
+      shown = false;
     };
 
     self.selectDate = function selectDate(e) {
       var val = e.target.getAttribute('data-date');
-      removeClass(self.el.querySelector('.sel'), 'sel');
+
+      var selected = self.el.querySelectorAll('.sel') || [];
+      arr(selected).forEach(function(el) {
+        removeClass(el, 'sel');
+      });
+
       addClass(e.target, 'sel');
       selectedDate = new Date(val);
-      if (self.boundInput) {
-        self.boundInput.value = val;
+      if (boundInput) {
+        boundInput.value = val;
       }
     };
 
     var render = function render() {
-      self.el.innerHTML = '';
-      self.el.appendChild(makeMonth(refDate, selectedDate));
-      self.el.appendChild(makeControls());
+      self.el.firstChild.innerHTML = '';
+      self.el.firstChild.appendChild(makeMonth(refDate, selectedDate));
     };
 
+    // The event handler used to open the picker.
     self.handler = function handler(e) {
-      self.boundInput = e.target;
-      attachTo(self.el, self.boundInput);
-      var currentVal = new Date(self.boundInput.value);
+      if (shown && boundInput === e.target) return;
+      // Associate with an input.
+      boundInput = e.target;
+      attachTo(self.el, boundInput);
+
+      // Attempt to read an initializing value from the input.
+      var currentVal = new Date(boundInput.value);
       refDate = today;
       if (currentVal.getUTCDate()) {
         selectedDate = currentVal;
         refDate = currentVal;
       } else {
-        selectedDate = undefined;
+        selectedDate = no;
       }
       render();
       self.show();
     };
 
-    self.nextMonth = function nextMonth() {
-      refDate = date.from(refDate, no, refDate.getMonth() + 1, no);
+    // Advance one month forward.
+    self.nextMonth = function nextMonth(e) {
+      refDate = date.rel(refDate, 0, 1, 0);
       render();
     };
 
-    self.prevMonth = function nextMonth() {
-      refDate = date.from(refDate, no, refDate.getMonth() - 1, no);
+    // Go back one month.
+    self.prevMonth = function nextMonth(e) {
+      refDate = date.rel(refDate, 0, -1, 0);
       render();
     };
+
+    // dismiss when the user clicks outside the picker.
+    win.addEventListener('click', function(e) {
+      var tgt = e.target;
+      if (tgt === win) return;
+      while (tgt.parentNode) {
+        if (tgt === self.el || tgt === boundInput) {
+          return;
+        }
+        tgt = tgt.parentNode;
+      }
+      if (shown) self.hide();
+    });
 
     delegate(self.el, 'click', { classes: 'day' }, self.selectDate);
     delegate(self.el, 'click', { classes: 'next' }, self.nextMonth);
     delegate(self.el, 'click', { classes: 'prev' }, self.prevMonth);
-  }
-
-  function dateMatches(d, matches) {
-    if (!matches) return;
-    matches = (matches.length) ? matches : [matches];
-    var foundMatch = false;
-    matches.forEach(function(match) {
-      if (match.length == 2) {
-        if (dateInRange(match[0], match[1], d)) {
-          foundMatch = true;
-        }
-      } else {
-        if (date.iso(match) == date.iso(d)) {
-          foundMatch = true;
-        }
-      }
-    });
-    return foundMatch;
-  }
-
-  function dateInRange(start, end, d) {
-    // convert to strings for easier conversion
-    return date.iso(start) <= date.iso(d) && date.iso(d) <= date.iso(end);
   }
 
 })();
