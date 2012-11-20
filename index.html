@@ -5,84 +5,100 @@
     <title>title</title>
     <style>
         .fortnight.picker {
-            position: absolute;
-            border: 2px solid #666;
-            color: #fff;
-            text-align: center;
-            font-family: sans-serif;
-            background: #fff;
-            overflow: hidden;
-            font-size: 14px;
             display: none;
+            position: absolute;
+            border: 2px solid #888;
+        }
+        .fortnight {
+            font-size: 14px;
+            font-family: sans-serif;
+            text-align: center;
+            overflow: hidden;
+        }
+        .fortnight.calendar {
+            position: relative;
+            background: #fff;
+            color: #fff;
+            overflow: hidden;
+            display: inline-block;
         }
         .fortnight.show {
             display: block;
         }
         .fortnight .month {
-            margin: 2px;
             display: inline-block;
-            white-space: nowrap;
+            margin: 2px;
             vertical-align: top;
+            white-space: nowrap;
         }
         .fortnight .week {
-            margin-top: 2px;
+            margin-top: 1px;
             overflow: hidden;
         }
         .fortnight .label,
         .fortnight a {
-            background: #666;
-            line-height: 2em;
+            background: #fff;
+            color: #444;
             height: 2em;
-            width: 2em;
+            line-height: 2em;
             text-decoration: none;
-            color: #fff;
+            width: 2em;
         }
         .fortnight a:hover {
-            background: #444;
+            background: #ddd;
         }
         .fortnight .label {
             width: 100%;
         }
         .fortnight .day {
+            color: #444;
             display: inline-block;
-            background: #666;
+            margin-left: 1px;
             white-space: nowrap;
-            margin-left: 2px;
         }
         .fortnight .day:first-child {
             margin: 0;
         }
-        .fortnight .day.sel {
-            background: #800;
-            font-weight: bold;
+        .fortnight .day.sel,
+        .fortnight .day:hover {
+            background: #444;
+            color: #fff;
         }
         .fortnight .day.badmonth {
-            background: #aaa;
+            background: #fff;
+            color: #aaa;
+        }
+        .fortnight .day.badmonth.sel {
+            background: #ddd;
         }
         .fortnight .day.badmonth:hover {
-            background: #888;
+            background: #ddd;
         }
-        .fortnight .day.sel:hover {
-            background: #500;
-        }
-        .fortnight .prev {
+        .fortnight .prev,
+        .fortnight .next {
+            color: #444;
             position: absolute;
             top: 2px;
+        }
+        .fortnight .prev {
             left: 2px;
         }
         .fortnight .next {
-            position: absolute;
-            top: 2px;
             right: 2px;
         }
     </style>
   </head>
   <body>
-    <input class="fortnight" type="date">
-    <input class="fortnight" type="date">
+    <input type="date">
+    <input type="date">
     <script src="fortnight.js"></script>
     <script>
-
+        fortnight.watch('input[type=date]');
+        var sample = new fortnight.Calendar({
+            span: 3,
+            selected: [[new Date(), new Date(2012,11,25)]]
+        });
+        document.body.appendChild(sample.el);
     </script>
   </body>
 </html>
