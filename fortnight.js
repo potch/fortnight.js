@@ -23,6 +23,10 @@ var fortnight = (function(win, doc, no) {
     parent.appendChild(child);
   }
 
+  function isValid(d) {
+    return !!(d.getTime) && isNaN(d.getTime());
+  }
+
   function delegate(el, type, props, handler) {
     el.addEventListener(type, function(e) {
       var tgt = e.target;
@@ -168,7 +172,7 @@ var fortnight = (function(win, doc, no) {
 
   // Find the nearest preceding Sunday.
   function findSunday(d) {
-    while(d.getUTCDay()) {
+    while(d.getUTCDay() > 0) {
       d = prevDay(d);
     }
     return d;
@@ -217,6 +221,7 @@ var fortnight = (function(win, doc, no) {
   }
 
   function makeMonth(d, selected) {
+    if (!isValid(d)) throw 'Invalid cursor date!';
     var month = getMonth(d);
     var tdate = getDate(d)
     var sDate = findSunday(findFirst(d));
