@@ -246,10 +246,10 @@ var fortnight = (function(win, doc, no) {
       }
       appendChild(week, day);
       cDate = nextDay(cDate);
-      if (!cDate.getUTCDay()) {
+      if (cDate.getUTCDay() < 1) {
         appendChild(monthEl, week);
         week = makeEl('div.week');
-        done = getMonth(cDate) != month && sDate.getTime() < cDate.getTime();
+        done = getMonth(cDate) > month || getYear(cDate) > getYear(sDate);
       }
     }
 
