@@ -142,6 +142,15 @@ var fortnight = (function(win, doc, no) {
             pad2(getDate(d))].join('-');
   }
 
+  var isoDateRegex = /(\d{4})[^\d]?(\d{2})[^\d]?(\d{2})/;
+  function fromIso(s){
+    if (s instanceof Date) return s;
+    var d = isoDateRegex.exec(s);
+    if (d) {
+      return new Date(d[1],d[2]-1,d[3]);
+    }
+  }
+
   // Create a new date based on the provided date.
   function from(base, y, m, d) {
     if (y === no) y = getYear(base);
@@ -333,7 +342,7 @@ var fortnight = (function(win, doc, no) {
     self.selectDate = function selectDate(e) {
       var val = e.target.getAttribute('data-date');
 
-      selectedDate = new Date(val);
+      selectedDate = fromIso(val);
       self.cal.selected = selectedDate;
       self.cal.render();
       if (boundInput) {
@@ -349,10 +358,13 @@ var fortnight = (function(win, doc, no) {
       attachTo(self.el, el);
 
       // Attempt to read an initializing value from the input.
-      var currentVal = new Date(el.value);
+      var currentVal = fromIso(el.value);
       refDate = today;
-      if (getDate(currentVal)) {
+      if (currentVal && getDate(currentVal)) {
         selectedDate = currentVal;
+        self.cal.selected = selectedDate;
+        self.cal.setCursor(selectedDate);
+        self.cal.render();
         refDate = currentVal;
       } else {
         selectedDate = no;
