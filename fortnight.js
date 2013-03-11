@@ -24,7 +24,7 @@ var fortnight = (function(win, doc, no) {
   }
 
   function isValid(d) {
-    return !!(d.getTime) && isNaN(d.getTime());
+    return !!(d.getTime) && !isNaN(d.getTime());
   }
 
   function delegate(el, type, props, handler) {
@@ -254,7 +254,9 @@ var fortnight = (function(win, doc, no) {
       if (cDate.getUTCDay() < 1) {
         appendChild(monthEl, week);
         week = makeEl('div.week');
-        done = getMonth(cDate) > month || getYear(cDate) > getYear(sDate);
+        // Are we finished drawing the month?
+        // Checks month rollover and year rollover
+        done = getMonth(cDate) > month || (getMonth(cDate) < month && getYear(cDate) > getYear(sDate));
       }
     }
 
